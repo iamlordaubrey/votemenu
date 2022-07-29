@@ -1,4 +1,6 @@
-fastapi==0.73.*
-uvicorn==0.17.*
+fastapi==0.79.*
+uvicorn==0.18.*
 
-python-dotenv==0.19.*
+python-dotenv==0.20.*
+
+jinja2==3.1.*
