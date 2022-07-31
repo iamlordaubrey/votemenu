@@ -2,7 +2,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Request, Depends
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -30,17 +30,17 @@ async def index(request: Request):
 
 @router.post('/restaurant', response_model=RetrieveRestaurantSchema, summary='Creates a restaurant')
 async def create_restaurant(restaurant: BaseRestaurantSchema, db: Session = Depends(get_db)):
-    restaurant = create_new_restaurant(db=db, restaurant=restaurant, db_model=Restaurant)
+    restaurant = create_new_restaurant(db=db, restaurant=restaurant)
     return jsonable_encoder(restaurant)
 
 
 @router.post('/employee', response_model=RetrieveEmployeeSchema, summary='Creates an employee')
 async def create_employee(employee: BaseEmployeeSchema, db: Session = Depends(get_db)):
-    employee = create_new_employee(db=db, employee=employee, db_model=Employee)
+    employee = create_new_employee(db=db, employee=employee)
     return jsonable_encoder(employee)
 
 
 @router.post('/menu', response_model=RetrieveMenuSchema, summary='Creates a menu')
 async def create_menu(menu: BaseMenuSchema, db: Session = Depends(get_db)):
-    menu = create_new_menu(db=db, menu=menu, db_model=Menu)
+    menu = create_new_menu(db=db, menu=menu)
     return jsonable_encoder(menu)

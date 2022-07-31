@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class BaseMenuSchema(BaseModel):
-    content: dict[str, str | dict]
+    content: dict
     restaurant_id: str
 
     class Config:

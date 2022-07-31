@@ -2,11 +2,11 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.models import Restaurant
+from app.models import Restaurant, Employee, Menu
 
 
-def create_new_restaurant(db: Session, restaurant, db_model):
-    new_restaurant = db_model(**restaurant.dict())
+def create_new_restaurant(db: Session, restaurant):
+    new_restaurant = Restaurant(**restaurant.dict())
 
     db.add(new_restaurant)
     db.commit()
@@ -15,8 +15,8 @@ def create_new_restaurant(db: Session, restaurant, db_model):
     return new_restaurant
 
 
-def create_new_employee(db: Session, employee, db_model):
-    new_employee = db_model(**employee.dict())
+def create_new_employee(db: Session, employee):
+    new_employee = Employee(**employee.dict())
     restaurant = get_restaurant_by_id(db, new_employee.restaurant_id)
 
     if not restaurant:
@@ -31,8 +31,8 @@ def create_new_employee(db: Session, employee, db_model):
     return new_employee
 
 
-def create_new_menu(db: Session, menu, db_model):
-    new_menu = db_model(**menu.dict())
+def create_new_menu(db: Session, menu):
+    new_menu = Menu(**menu.dict())
     menu = get_restaurant_by_id(db, new_menu.restaurant_id)
 
     if not menu:

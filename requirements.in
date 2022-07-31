@@ -9,4 +9,8 @@ psycopg2-binary==2.9.*
 sqlalchemy==1.4.*
 sqlalchemy-utils==0.38.3
 
+requests==2.28.*
+httpx==0.23.*
 pytest==7.1.*
+pytest-asyncio==0.19.*
+asynctest==0.13.*
