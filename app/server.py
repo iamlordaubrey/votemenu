@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from uvicorn import Server, Config
 
+from app.database import Base, engine
 from app.routers import main, health_check
 from app.settings import settings
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
