@@ -7,6 +7,7 @@ DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 
 
 class Settings(BaseSettings):
+    API_V1_STR: str = '/api/v1'
     port: str
     root_dir: str = DIR_PATH
 
