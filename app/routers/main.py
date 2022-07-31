@@ -1,4 +1,7 @@
+import datetime
 from pathlib import Path
+from typing import List
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Request, Depends
 from fastapi.encoders import jsonable_encoder
@@ -6,12 +9,14 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
+from app.constants import TIMEZONE
 from app.database import get_db
-from app.models import Restaurant, Employee, Menu
 from app.schemas.menu import BaseMenuSchema, RetrieveMenuSchema
 from app.schemas.restaurant import BaseRestaurantSchema, RetrieveRestaurantSchema
 from app.schemas.employee import BaseEmployeeSchema, RetrieveEmployeeSchema
-from app.services.crud_db import create_new_restaurant, create_new_employee, create_new_menu
+from app.services.crud_db import (
+    create_new_restaurant, create_new_employee, create_new_menu, get_menu_for_date
+)
 from app.settings import settings
 
 router = APIRouter()
@@ -44,3 +49,11 @@ async def create_employee(employee: BaseEmployeeSchema, db: Session = Depends(ge
 async def create_menu(menu: BaseMenuSchema, db: Session = Depends(get_db)):
     menu = create_new_menu(db=db, menu=menu)
     return jsonable_encoder(menu)
+
+
+@router.get('/menu', response_model=List, summary='Returns all the menu for today')
+async def get_menu(date: str = None, db: Session = Depends(get_db)):
+    datetime_object = datetime.datetime.fromisoformat(date).replace(tzinfo=ZoneInfo(TIMEZONE))
+
+    menu_today = get_menu_for_date(db=db, date_obj=datetime_object)
+    return jsonable_encoder(menu_today)

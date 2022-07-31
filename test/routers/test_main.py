@@ -4,7 +4,6 @@ import pytest
 
 from fastapi import status
 
-from app.models import Restaurant
 from app.schemas.restaurant import BaseRestaurantSchema
 from app.server import app
 
