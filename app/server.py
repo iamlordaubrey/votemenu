@@ -10,9 +10,9 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title='Menu Votes', openapi_url='/openapi.json')
 
-app.include_router(home_page.router)
+app.include_router(home_page.router, tags=['Home page'])
 
-app.include_router(health_check.router, tags=['health check'])
+app.include_router(health_check.router, tags=['Health check'])
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 

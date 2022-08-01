@@ -34,3 +34,15 @@ class Menu(Base):
     created_at = Column(DateTime(timezone=True), default=func.now())
 
     restaurant = relationship('Restaurant')
+
+
+class Vote(Base):
+    __tablename__ = 'vote'
+    id = Column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
+    employee_id = Column(UUID, ForeignKey('employee.id'))
+    menu_one_id = Column(UUID, ForeignKey('menu.id'))
+
+    created_at = Column(DateTime(timezone=True), default=func.now())
+
+    employee = relationship('Employee')
+    menu = relationship('Menu')
