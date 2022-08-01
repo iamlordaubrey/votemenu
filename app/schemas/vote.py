@@ -11,3 +11,12 @@ class BaseVoteSchema(BaseModel):
 
 class RetrieveVoteSchema(BaseVoteSchema):
     id: str
+
+
+class BaseVoteSchemaV2(BaseVoteSchema):
+    menu_two_id: str
+    menu_three_id: str
+
+
+class RetrieveVoteSchemaV2(BaseVoteSchemaV2):
+    id: str

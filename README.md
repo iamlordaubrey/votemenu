@@ -2,7 +2,9 @@
 
 Description: An API to vote on restaurant menus
 
-### Assumptions
+### Limitations
+The v2 endpoint doesn't calculate the vote result; it currently uses v1's logic.
+v2 needs to use a weighted average of the columns in determining the result.
 
 ### Tech Stack
 Built using the FastAPI framework. Libraries are kept as minimal as possible. 
@@ -55,6 +57,7 @@ docker-compose up --build
 /restaurant     : Restaurant endpoint
 /employee       : Employee endpoint
 /menu           : Menu endpoint
+/vote           : Vote (and result) endpoint
 
 /docs           : Documentation
 /redoc          : Documentation

@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from app.constants import TIMEZONE
 from app.database import get_db
 from app.schemas.menu import RetrieveMenuSchema, BaseMenuSchema
-from app.services.crud_db import create_new_menu, get_menu_for_date
+from app.services.crud_db import create_new_menu
+from app.utils import get_menu_for_date
 
 router = APIRouter()
 

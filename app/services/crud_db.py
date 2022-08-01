@@ -1,14 +1,24 @@
 import datetime
-from uuid import UUID
+import logging
+from typing import List, Tuple
 
+from fastapi import status, HTTPException
 from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
 from app.models import Restaurant, Employee, Menu, Vote
-from app.utils import get_midnight_today
+from app.schemas.employee import BaseEmployeeSchema
+from app.schemas.menu import BaseMenuSchema
+from app.schemas.restaurant import BaseRestaurantSchema
+from app.schemas.vote import BaseVoteSchema
+from app.settings import settings
+from app.utils import get_midnight_today, is_valid_id
+
+logger = logging.getLogger(__name__)
+logger.setLevel(settings.log_level)
 
 
-def create_new_restaurant(db: Session, restaurant):
+def create_new_restaurant(db: Session, restaurant: BaseRestaurantSchema) -> Restaurant:
     new_restaurant = Restaurant(**restaurant.dict())
 
     db.add(new_restaurant)
@@ -18,15 +28,17 @@ def create_new_restaurant(db: Session, restaurant):
     return new_restaurant
 
 
-def create_new_employee(db: Session, employee):
+def create_new_employee(db: Session, employee: BaseEmployeeSchema) -> Employee:
     new_employee = Employee(**employee.dict())
 
     # Employee must be associated with a restaurant
-    valid_restaurant = get_restaurant_by_id(db, new_employee.restaurant_id)
+    valid_restaurant = is_valid_id(db, new_employee.restaurant_id, Restaurant)
     if not valid_restaurant:
-        # throw an error
-        print('an error occurred')
-        return
+        # log error and raise exception
+        logger.info('Invalid Restaurant ID', extra=dict(
+            type='invalid_id',
+        ))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid Restaurant ID')
 
     db.add(new_employee)
     db.commit()
@@ -35,21 +47,31 @@ def create_new_employee(db: Session, employee):
     return new_employee
 
 
-def create_new_menu(db: Session, menu):
+def create_new_menu(db: Session, menu: BaseMenuSchema) -> Menu:
     new_menu = Menu(**menu.dict())
 
     # Menu must be associated with a restaurant
-    valid_restaurant = get_restaurant_by_id(db, new_menu.restaurant_id)
+    valid_restaurant = is_valid_id(db, new_menu.restaurant_id, Restaurant)
     if not valid_restaurant:
-        print('an error occurred')
-        return
+        # log error and raise exception
+        logger.info('Invalid Restaurant ID', extra=dict(
+            type='invalid_id',
+        ))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid Restaurant ID')
 
-    # Submit one menu per day
+    # A restaurant should submit one menu per day
     yesterday = get_midnight_today() - datetime.timedelta(days=1)
     previous_menu_today = db.query(Menu).filter(Menu.created_at > yesterday).first()
-    if previous_menu_today:
-        print('Menu already submitted today')
-        return
+    previous_menu_by_restaurant = db.query(Menu).filter(
+        new_menu.restaurant_id == Menu.restaurant_id).first() if previous_menu_today else None
+
+    if previous_menu_by_restaurant:
+        # log error and raise exception
+        logger.info('Menu already submitted today, daily limit reached', extra=dict(
+            type='menu_already_submitted',
+        ))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail='Menu already submitted today, daily limit reached')
 
     db.add(new_menu)
     db.commit()
@@ -58,25 +80,30 @@ def create_new_menu(db: Session, menu):
     return new_menu
 
 
-def create_new_vote(db: Session, vote):
+def create_new_vote(db: Session, vote: BaseVoteSchema) -> Vote:
     new_vote = Vote(**vote.dict())
 
     # Vote must be associated with an employee and a menu
-    valid_employee = get_employee_by_id(db, new_vote.employee_id)
-    valid_menu = get_menu_by_id(db, new_vote.menu_one_id)
+    valid_employee = is_valid_id(db, new_vote.employee_id, Employee)
+    valid_menu = is_valid_id(db, new_vote.menu_one_id, Menu)
     if not valid_employee or not valid_menu:
-        print('Invalid Employee or Menu')
-        return
+        logger.info('Invalid Employee ID or Menu ID', extra=dict(
+            type='invalid_id',
+        ))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='Invalid Employee ID or Menu ID')
 
-    # Submit one vote per employee per day
+    # An employee should submit one vote per day
     yesterday = get_midnight_today() - datetime.timedelta(days=1)
     previous_votes_today = db.query(Vote).filter(Vote.created_at > yesterday).first()
     previous_vote_by_employee = db.query(Vote).filter(
-        new_vote.employee_id == previous_votes_today.employee_id) if previous_votes_today else None
+        new_vote.employee_id == Vote.employee_id).first() if previous_votes_today else None
 
     if previous_vote_by_employee:
-        print('Employee already voted today')
-        return
+        logger.info('Employee already voted today, daily limit reached', extra=dict(
+            type='employee_already_voted',
+        ))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail='Employee already voted today, daily limit reached')
 
     db.add(new_vote)
     db.commit()
@@ -85,30 +112,11 @@ def create_new_vote(db: Session, vote):
     return new_vote
 
 
-def get_daily_result(db: Session):
+def get_daily_result(db: Session) -> List[Tuple]:
     # Get results for today
     yesterday = get_midnight_today() - datetime.timedelta(days=1)
 
-    query = db.query(Vote.menu_one_id, func.count(Vote.id).label('votes'))
+    query = db.query(Vote.menu_one_id.label('menu_id'), func.count(Vote.id).label('votes'))
     previous_votes_today_query = query.filter(Vote.created_at > yesterday)
     result = previous_votes_today_query.group_by(Vote.menu_one_id).order_by(desc('votes')).all()
     return result
-
-
-def get_menu_for_date(db: Session, date_obj: datetime.datetime):
-    end_of_day = datetime.datetime.combine(date_obj, datetime.time.max)
-
-    menu_today = db.query(Menu).filter(Menu.created_at >= date_obj, Menu.created_at <= end_of_day).all()
-    return menu_today
-
-
-def get_restaurant_by_id(db: Session, restaurant_id: UUID):
-    return db.query(Restaurant).filter(restaurant_id == Restaurant.id).first()
-
-
-def get_employee_by_id(db: Session, employee_id: UUID):
-    return db.query(Employee).filter(employee_id == Employee.id).first()
-
-
-def get_menu_by_id(db: Session, menu_id: UUID):
-    return db.query(Menu).filter(menu_id == Menu.id).first()
