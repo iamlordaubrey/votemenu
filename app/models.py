@@ -47,3 +47,10 @@ class Vote(Base):
     created_at = Column(DateTime(timezone=True), default=func.now())
 
     employee = relationship('Employee')
+
+
+class User(Base):
+    __tablename__ = 'user'
+    id = Column(Integer, primary_key=True)
+    email = Column(String, unique=True)
+    password = Column(String)

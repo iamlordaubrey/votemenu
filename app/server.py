@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from uvicorn import Server, Config
 
 from app.api import health_check, home_page
+from app.auth.router import router as auth_router
 from app.api.api_v1.api import api_router as api_router_v1
 from app.api.api_v2.api import api_router as api_router_v2
 from app.database import Base, engine
@@ -10,6 +11,8 @@ from app.settings import settings
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title='Menu Votes', openapi_url='/openapi.json')
+
+app.include_router(auth_router)
 
 app.include_router(home_page.router, tags=['Home page'])
 app.include_router(health_check.router, tags=['Health check'])

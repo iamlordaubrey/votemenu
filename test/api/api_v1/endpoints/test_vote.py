@@ -4,6 +4,7 @@ import pytest
 
 from fastapi import status
 
+from app.auth.jwt import create_access_token
 from app.schemas.employee import BaseEmployeeSchema
 from app.schemas.menu import BaseMenuSchema
 from app.schemas.restaurant import BaseRestaurantSchema
@@ -39,6 +40,7 @@ class VoteTest(asynctest.TestCase):
             'restaurant_id': str(restaurant.id)
         }
         self.menu = create_new_menu(test_db_session, BaseMenuSchema(**new_menu))
+        self.user_access = create_access_token({'sub': 'aubrey@gmail.com'})
 
     @pytest.mark.asyncio
     async def test_post_to_vote_endpoint(self):
@@ -48,7 +50,9 @@ class VoteTest(asynctest.TestCase):
         }
 
         async with httpx.AsyncClient(app=app, base_url='http://test') as async_client:
-            response = await async_client.post('/api/v1/vote', json=payload)
+            response = await async_client.post(
+                '/api/v1/vote', json=payload, headers={'Authorization': f'Bearer {self.user_access}'}
+            )
             self.assertEqual(response.status_code, status.HTTP_201_CREATED)
             self.assertIn('id', response.text)
 
@@ -80,6 +84,7 @@ class ResultTest(asynctest.TestCase):
             'restaurant_id': str(restaurant.id)
         }
         self.control_menu = create_new_menu(test_db_session, BaseMenuSchema(**first_menu))
+        self.user_access = create_access_token({'sub': 'aubrey@gmail.com'})
 
         for count in range(20):
             """
@@ -124,6 +129,8 @@ class ResultTest(asynctest.TestCase):
     @pytest.mark.asyncio
     async def test_get_result(self):
         async with httpx.AsyncClient(app=app, base_url='http://test') as async_client:
-            response = await async_client.get('/api/v1/vote/result')
+            response = await async_client.get(
+                '/api/v1/vote/result', headers={'Authorization': f'Bearer {self.user_access}'}
+            )
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertIn(10, response.json()[0].values())
