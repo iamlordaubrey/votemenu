@@ -1,6 +1,11 @@
 # Menu Vote
 
-Description: An API to vote on restaurant menus
+Description: An API that enables
+- Restaurants to be created
+- Employees to be created under a restaurant
+- Menus to be uploaded by a restaurant *daily*
+- Employees to vote on a restaurants menus *daily*
+- Viewing the votes result, from highest to lowest menu vote count
 
 ### Limitations
 The v2 endpoint doesn't calculate the vote result; it currently uses v1's logic.
